@@ -1,214 +1,151 @@
+
 package com.example.smartpantrymanager_rea;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Bundle;
 import android.view.Gravity;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import android.widget.*;
 
 public class RecipesActivity extends Activity {
 
-    DBHelper database;
-    ArrayList<Recipe> recipes = new ArrayList<>();
-    LinearLayout recipeList;
+    private final int navy = Color.rgb(23, 54, 93);
+    private final int blue = Color.rgb(57, 118, 197);
+    private final int background = Color.rgb(240, 246, 255);
+
+    private void goHome() {
+        Intent intent = new Intent(RecipesActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        database = new DBHelper(this);
-        loadRecipes();
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(24, 24, 24, 24);
+        layout.setBackgroundColor(background);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(18, 20, 18, 18);
-        root.setBackgroundColor(Color.rgb(255, 246, 250));
+        scrollView.addView(layout);
+        setContentView(scrollView);
 
         Button backButton = new Button(this);
-        backButton.setText("← Back");
+        backButton.setText("← BACK TO HOME");
+        backButton.setTextColor(Color.WHITE);
+        backButton.setTextSize(16);
         backButton.setAllCaps(false);
-        root.addView(backButton);
+        backButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(navy));
 
-        backButton.setOnClickListener(view -> finish());
+        LinearLayout.LayoutParams backParams =
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+        backParams.bottomMargin = 20;
+        layout.addView(backButton, backParams);
+
+        backButton.setOnClickListener(v -> goHome());
 
         TextView title = new TextView(this);
-        title.setText("Recipe Ideas");
-        title.setTextSize(27);
-        title.setTextColor(Color.rgb(135, 54, 91));
-        root.addView(title);
+        title.setText("Find Recipes");
+        title.setTextSize(28);
+        title.setTextColor(navy);
+        title.setPadding(0, 10, 0, 15);
+        layout.addView(title);
 
-        TextView subtitle = new TextView(this);
-        subtitle.setText(
-                "Recipes that match ingredients in your pantry."
-        );
-        root.addView(subtitle);
+        String[] names = {
+                "Omelette", "Pasta", "Vegetable Fried Rice",
+                "Pancakes", "Chicken Sandwich", "Tomato Soup",
+                "Potato Salad", "Fruit Salad", "Cheese Toast",
+                "Vegetable Stir-Fry"
+        };
 
-        ScrollView scroll = new ScrollView(this);
+        String[][] ingredients = {
+                {"Eggs", "Salt", "Pepper"},
+                {"Pasta", "Tomato", "Onion"},
+                {"Rice", "Carrot", "Peas"},
+                {"Flour", "Milk", "Eggs"},
+                {"Bread", "Chicken", "Lettuce"},
+                {"Tomato", "Onion", "Salt"},
+                {"Potato", "Mayonnaise", "Salt"},
+                {"Apple", "Banana", "Orange"},
+                {"Bread", "Cheese", "Butter"},
+                {"Carrot", "Broccoli", "Onion"}
+        };
 
-        recipeList = new LinearLayout(this);
-        recipeList.setOrientation(LinearLayout.VERTICAL);
+        String[] instructions = {
+                "Beat eggs with salt and pepper. Cook in a lightly oiled pan until set.",
+                "Cook pasta. Prepare tomato and onion sauce, then mix with pasta.",
+                "Cook rice. Fry carrot and peas, add rice, and stir together.",
+                "Mix flour, milk and eggs. Cook small portions in a lightly greased pan.",
+                "Cook chicken thoroughly. Add chicken and lettuce to bread.",
+                "Cook chopped tomatoes and onion until soft. Season with salt.",
+                "Boil potatoes until tender. Cool and mix with mayonnaise and salt.",
+                "Wash and chop the fruit. Mix together and serve chilled.",
+                "Butter bread, add cheese, and toast until golden and melted.",
+                "Chop vegetables and stir-fry in a little oil until tender."
+        };
 
-        scroll.addView(recipeList);
+        for (int i = 0; i < names.length; i++) {
+            final int position = i;
 
-        root.addView(scroll,
-                new LinearLayout.LayoutParams(-1, 0, 1));
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(16, 16, 16, 16);
+            card.setBackgroundColor(Color.rgb(220, 235, 255));
 
-        setContentView(root);
+            TextView recipeName = new TextView(this);
+            recipeName.setText(names[i]);
+            recipeName.setTextSize(20);
+            recipeName.setTextColor(navy);
+            card.addView(recipeName);
 
-        displayRecipes();
-    }
+            TextView recipeIngredients = new TextView(this);
+            recipeIngredients.setText(
+                    "Ingredients: " + String.join(", ", ingredients[i]));
+            recipeIngredients.setTextColor(navy);
+            recipeIngredients.setPadding(0, 8, 0, 8);
+            card.addView(recipeIngredients);
 
-    private void loadRecipes() {
-        recipes.add(new Recipe(
-                "Cheese Omelette",
-                "eggs, cheese, salt, pepper",
-                "1. Beat the eggs. 2. Add salt and pepper. " +
-                        "3. Cook in a pan and add cheese before folding."
-        ));
+            Button viewButton = new Button(this);
+            viewButton.setText("View Recipe");
+            viewButton.setTextColor(Color.WHITE);
+            viewButton.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(blue));
+            card.addView(viewButton);
 
-        recipes.add(new Recipe(
-                "Tomato Pasta",
-                "pasta, tomato, onion, garlic, salt",
-                "1. Boil the pasta. 2. Cook the chopped onion, " +
-                        "garlic and tomato. 3. Mix the sauce with pasta."
-        ));
-
-        recipes.add(new Recipe(
-                "Banana Pancakes",
-                "banana, eggs, flour, milk",
-                "1. Mash the banana. 2. Mix with eggs, flour " +
-                        "and milk. 3. Fry until golden."
-        ));
-
-        recipes.add(new Recipe(
-                "Chicken Rice Bowl",
-                "chicken, rice, onion, oil, salt",
-                "1. Cook the rice. 2. Cook chicken and onion " +
-                        "thoroughly. 3. Serve together."
-        ));
-
-        recipes.add(new Recipe(
-                "Garden Salad",
-                "lettuce, tomato, cucumber, carrot",
-                "1. Wash and chop the vegetables. " +
-                        "2. Mix in a bowl. 3. Add dressing."
-        ));
-
-        recipes.add(new Recipe(
-                "Garlic Toast",
-                "bread, butter, garlic",
-                "1. Mix softened butter with crushed garlic. " +
-                        "2. Spread on bread. 3. Toast until golden."
-        ));
-
-        recipes.add(new Recipe(
-                "Creamy Oats",
-                "oats, milk, banana, honey",
-                "1. Simmer oats with milk. 2. Stir until soft. " +
-                        "3. Add banana and honey."
-        ));
-
-        recipes.add(new Recipe(
-                "Vegetable Fried Rice",
-                "rice, carrot, peas, egg, soy sauce",
-                "1. Scramble the egg. 2. Cook the vegetables. " +
-                        "3. Add cooked rice and soy sauce."
-        ));
-
-        recipes.add(new Recipe(
-                "Yoghurt Fruit Bowl",
-                "yoghurt, banana, apple, honey",
-                "1. Slice the fruit. 2. Add yoghurt. " +
-                        "3. Drizzle with honey."
-        ));
-
-        recipes.add(new Recipe(
-                "Cheese Sandwich",
-                "bread, cheese, tomato, butter",
-                "1. Butter the bread. 2. Add cheese and tomato. " +
-                        "3. Toast or serve fresh."
-        ));
-    }
-
-    private int matchCount(Recipe recipe) {
-        int count = 0;
-
-        ArrayList<Ingredient> pantry = database.getIngredients();
-
-        for (String required : recipe.getIngredientList()) {
-            String wanted = required.trim();
-
-            for (Ingredient item : pantry) {
-                if (item.name != null &&
-                        (item.name.toLowerCase().contains(wanted)
-                                || wanted.contains(item.name.toLowerCase()))) {
-                    count++;
-                    break;
-                }
-            }
-        }
-
-        return count;
-    }
-
-    private void displayRecipes() {
-        recipeList.removeAllViews();
-
-        ArrayList<Recipe> sorted = new ArrayList<>(recipes);
-
-        Collections.sort(sorted, (a, b) ->
-                Integer.compare(matchCount(b), matchCount(a)));
-
-        for (Recipe recipe : sorted) {
-            Button button = new Button(this);
-            button.setAllCaps(false);
-            button.setGravity(
-                    Gravity.START | Gravity.CENTER_VERTICAL
-            );
-
-            button.setText(
-                    recipe.name + "\nMatched ingredients: " +
-                            matchCount(recipe) + " / " +
-                            recipe.getIngredientList().size()
-            );
-
-            recipeList.addView(button);
-
-            button.setOnClickListener(view -> {
+            viewButton.setOnClickListener(v -> {
                 Intent intent = new Intent(
-                        this, RecipeDetailActivity.class
-                );
+                        RecipesActivity.this,
+                        RecipeDetailActivity.class);
 
-                intent.putExtra("name", recipe.name);
-                intent.putExtra("ingredients", recipe.ingredients);
-                intent.putExtra("instructions", recipe.instructions);
+                intent.putExtra("recipeName", names[position]);
+                intent.putExtra(
+                        "recipeIngredients",
+                        String.join(", ", ingredients[position]));
+                intent.putExtra(
+                        "recipeInstructions", instructions[position]);
 
                 startActivity(intent);
             });
+
+            LinearLayout.LayoutParams cardParams =
+                    new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardParams.bottomMargin = 16;
+            layout.addView(card, cardParams);
         }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (database != null && recipeList != null) {
-            displayRecipes();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (database != null) {
-            database.close();
-        }
-        super.onDestroy();
+    public void onBackPressed() {
+        goHome();
     }
 }

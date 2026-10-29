@@ -1,241 +1,207 @@
+
 package com.example.smartpantrymanager_rea;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.graphics.Color;
+import android.view.View;
+import android.widget.*;
+import android.text.InputType;
 
 import java.util.ArrayList;
 
 public class PantryActivity extends Activity {
 
-    DBHelper database;
-    LinearLayout ingredientList;
+    private DBHelper dbHelper;
+    private LinearLayout ingredientsLayout;
+
+    private final int navy = Color.rgb(23, 54, 93);
+    private final int blue = Color.rgb(57, 118, 197);
+    private final int background = Color.rgb(240, 246, 255);
+    private final int cardBlue = Color.rgb(220, 235, 255);
+
+    private EditText nameInput;
+    private EditText quantityInput;
+    private EditText categoryInput;
+    private EditText expiryInput;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        database = new DBHelper(this);
+        dbHelper = new DBHelper(this);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(18, 20, 18, 18);
-        root.setBackgroundColor(Color.rgb(255, 246, 250));
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout mainLayout = new LinearLayout(this);
+        mainLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.setPadding(24, 24, 24, 24);
+        mainLayout.setBackgroundColor(background);
+
+        scrollView.addView(mainLayout);
+        setContentView(scrollView);
 
         Button backButton = new Button(this);
         backButton.setText("← Back");
-        backButton.setAllCaps(false);
-        root.addView(backButton);
+        backButton.setTextColor(Color.WHITE);
+        backButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(navy));
+        mainLayout.addView(backButton);
 
-        backButton.setOnClickListener(view -> finish());
+        backButton.setOnClickListener(v -> finish());
 
         TextView title = new TextView(this);
         title.setText("My Pantry");
-        title.setTextSize(27);
-        title.setTextColor(Color.rgb(135, 54, 91));
-        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setTextSize(28);
+        title.setTextColor(navy);
+        title.setPadding(0, 20, 0, 20);
+        mainLayout.addView(title);
 
-        root.addView(title,
-                new LinearLayout.LayoutParams(-1, 60));
+        nameInput = createInput("Ingredient name");
+        mainLayout.addView(nameInput);
+
+        quantityInput = createInput("Quantity (e.g. 2 cups)");
+        mainLayout.addView(quantityInput);
+
+        categoryInput = createInput("Category (e.g. Vegetables)");
+        mainLayout.addView(categoryInput);
+
+        expiryInput = createInput("Expiry date (e.g. 2026-11-15)");
+        mainLayout.addView(expiryInput);
 
         Button addButton = new Button(this);
-        addButton.setText("+ Add ingredient");
-        addButton.setAllCaps(false);
-        root.addView(addButton);
+        addButton.setText("Add Ingredient");
+        addButton.setTextColor(Color.WHITE);
+        addButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(blue));
+        mainLayout.addView(addButton);
 
-        ScrollView scrollView = new ScrollView(this);
+        TextView listTitle = new TextView(this);
+        listTitle.setText("Your Ingredients");
+        listTitle.setTextSize(22);
+        listTitle.setTextColor(navy);
+        listTitle.setPadding(0, 24, 0, 12);
+        mainLayout.addView(listTitle);
 
-        ingredientList = new LinearLayout(this);
-        ingredientList.setOrientation(LinearLayout.VERTICAL);
-        scrollView.addView(ingredientList);
+        ingredientsLayout = new LinearLayout(this);
+        ingredientsLayout.setOrientation(LinearLayout.VERTICAL);
+        mainLayout.addView(ingredientsLayout);
 
-        root.addView(scrollView,
-                new LinearLayout.LayoutParams(-1, 0, 1));
+        addButton.setOnClickListener(v -> addIngredient());
 
-        addButton.setOnClickListener(view -> showForm(null));
-
-        setContentView(root);
-
-        refreshIngredients();
+        loadIngredients();
     }
 
-    private void refreshIngredients() {
-        ingredientList.removeAllViews();
+    private EditText createInput(String hint) {
+        EditText input = new EditText(this);
+        input.setHint(hint);
+        input.setTextColor(navy);
+        input.setHintTextColor(Color.GRAY);
+        input.setSingleLine(true);
+        return input;
+    }
 
-        ArrayList<Ingredient> items = database.getIngredients();
+    private void addIngredient() {
+        String name = nameInput.getText().toString().trim();
+        String quantity = quantityInput.getText().toString().trim();
+        String category = categoryInput.getText().toString().trim();
+        String expiry = expiryInput.getText().toString().trim();
 
-        if (items.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText(
-                    "Your pantry is empty.\nAdd your first ingredient!"
-            );
-            empty.setTextSize(16);
-            empty.setPadding(8, 28, 8, 28);
-            ingredientList.addView(empty);
+        if (name.isEmpty()) {
+            nameInput.setError("Enter an ingredient name");
+            return;
         }
 
-        for (Ingredient item : items) {
+        if (quantity.isEmpty()) {
+            quantityInput.setError("Enter a quantity");
+            return;
+        }
+
+        if (category.isEmpty()) {
+            category = "Other";
+        }
+
+        if (expiry.isEmpty()) {
+            expiry = "Not specified";
+        }
+
+        boolean success = dbHelper.addIngredient(
+                name, quantity, category, expiry);
+
+        if (success) {
+            Toast.makeText(this, "Ingredient added successfully",
+                    Toast.LENGTH_SHORT).show();
+
+            nameInput.setText("");
+            quantityInput.setText("");
+            categoryInput.setText("");
+            expiryInput.setText("");
+
+            loadIngredients();
+        } else {
+            Toast.makeText(this, "Could not add ingredient",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void loadIngredients() {
+        ingredientsLayout.removeAllViews();
+
+        ArrayList<Ingredient> ingredients = dbHelper.getIngredients();
+
+        if (ingredients.isEmpty()) {
+            TextView emptyText = new TextView(this);
+            emptyText.setText("Your pantry is empty. Add your first ingredient!");
+            emptyText.setTextSize(16);
+            emptyText.setTextColor(navy);
+            emptyText.setPadding(0, 12, 0, 12);
+            ingredientsLayout.addView(emptyText);
+            return;
+        }
+
+        for (Ingredient ingredient : ingredients) {
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
             card.setPadding(16, 12, 16, 12);
-            card.setBackgroundColor(Color.WHITE);
-
-            LinearLayout.LayoutParams cardParams =
-                    new LinearLayout.LayoutParams(-1, -2);
-            cardParams.setMargins(0, 8, 0, 8);
-
-            ingredientList.addView(card, cardParams);
-
-            TextView name = new TextView(this);
-            name.setText(item.name);
-            name.setTextSize(19);
-            name.setTextColor(Color.rgb(135, 54, 91));
-            card.addView(name);
+            card.setBackgroundColor(cardBlue);
 
             TextView details = new TextView(this);
             details.setText(
-                    "Quantity: " + safe(item.quantity) +
-                            "\nCategory: " + safe(item.category) +
-                            "\nExpiry: " + safe(item.expiry)
+                    ingredient.name +
+                            "\nQuantity: " + ingredient.quantity +
+                            "\nCategory: " + ingredient.category +
+                            "\nExpiry: " + ingredient.expiry
             );
+            details.setTextSize(16);
+            details.setTextColor(navy);
             card.addView(details);
 
-            LinearLayout actions = new LinearLayout(this);
+            Button deleteButton = new Button(this);
+            deleteButton.setText("Delete Ingredient");
+            deleteButton.setTextColor(Color.WHITE);
+            deleteButton.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(blue));
+            card.addView(deleteButton);
 
-            Button edit = new Button(this);
-            edit.setText("Edit");
-            edit.setAllCaps(false);
+            deleteButton.setOnClickListener(v -> {
+                boolean deleted = dbHelper.deleteIngredient(ingredient.id);
 
-            Button delete = new Button(this);
-            delete.setText("Delete");
-            delete.setAllCaps(false);
+                if (deleted) {
+                    Toast.makeText(this, "Ingredient deleted",
+                            Toast.LENGTH_SHORT).show();
+                    loadIngredients();
+                } else {
+                    Toast.makeText(this, "Could not delete ingredient",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
 
-            actions.addView(edit,
-                    new LinearLayout.LayoutParams(0, -2, 1));
+            LinearLayout.LayoutParams params =
+                    new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT);
 
-            actions.addView(delete,
-                    new LinearLayout.LayoutParams(0, -2, 1));
-
-            card.addView(actions);
-
-            edit.setOnClickListener(view -> showForm(item));
-
-            delete.setOnClickListener(view ->
-                    new AlertDialog.Builder(this)
-                            .setTitle("Delete ingredient")
-                            .setMessage("Delete " + item.name + "?")
-                            .setNegativeButton("Cancel", null)
-                            .setPositiveButton("Delete", (dialog, which) -> {
-                                database.deleteIngredient(item.id);
-                                refreshIngredients();
-
-                                Toast.makeText(
-                                        this,
-                                        "Ingredient deleted",
-                                        Toast.LENGTH_SHORT
-                                ).show();
-                            })
-                            .show()
-            );
+            params.setMargins(0, 8, 0, 8);
+            ingredientsLayout.addView(card, params);
         }
-    }
-
-    private String safe(String value) {
-        return value == null || value.trim().isEmpty()
-                ? "Not specified" : value;
-    }
-
-    private EditText createField(String hint) {
-        EditText field = new EditText(this);
-        field.setHint(hint);
-        return field;
-    }
-
-    private void showForm(Ingredient oldItem) {
-        LinearLayout form = new LinearLayout(this);
-        form.setPadding(20, 8, 20, 0);
-        form.setOrientation(LinearLayout.VERTICAL);
-
-        EditText name = createField("Ingredient name");
-        EditText quantity = createField("Quantity");
-        EditText category = createField("Category");
-        EditText expiry = createField("Expiry date (optional)");
-
-        form.addView(name);
-        form.addView(quantity);
-        form.addView(category);
-        form.addView(expiry);
-
-        if (oldItem != null) {
-            name.setText(oldItem.name);
-            quantity.setText(oldItem.quantity);
-            category.setText(oldItem.category);
-            expiry.setText(oldItem.expiry);
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle(oldItem == null
-                        ? "Add ingredient" : "Edit ingredient")
-                .setView(form)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Save", (dialog, which) -> {
-
-                    String ingredientName =
-                            name.getText().toString().trim();
-
-                    if (ingredientName.isEmpty()) {
-                        Toast.makeText(
-                                this,
-                                "Enter an ingredient name",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        return;
-                    }
-
-                    boolean success;
-
-                    if (oldItem == null) {
-                        success = database.addIngredient(
-                                ingredientName,
-                                quantity.getText().toString().trim(),
-                                category.getText().toString().trim(),
-                                expiry.getText().toString().trim()
-                        );
-                    } else {
-                        success = database.updateIngredient(
-                                oldItem.id,
-                                ingredientName,
-                                quantity.getText().toString().trim(),
-                                category.getText().toString().trim(),
-                                expiry.getText().toString().trim()
-                        );
-                    }
-
-                    Toast.makeText(
-                            this,
-                            success ? "Ingredient saved"
-                                    : "Could not save ingredient",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    refreshIngredients();
-                })
-                .show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (database != null) {
-            database.close();
-        }
-        super.onDestroy();
     }
 }

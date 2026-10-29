@@ -1,78 +1,56 @@
+
 package com.example.smartpantrymanager_rea;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.graphics.Color;
+import android.widget.*;
 
 public class SettingsActivity extends Activity {
+
+    int navy = Color.rgb(23, 54, 93);
+    int blue = Color.rgb(57, 118, 197);
+    int background = Color.rgb(240, 246, 255);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 24, 24, 24);
-        root.setBackgroundColor(Color.rgb(255, 246, 250));
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(24, 24, 24, 24);
+        layout.setBackgroundColor(background);
+
+        setContentView(layout);
 
         Button backButton = new Button(this);
         backButton.setText("← Back");
-        backButton.setAllCaps(false);
-        root.addView(backButton);
+        backButton.setTextColor(Color.WHITE);
+        backButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(navy));
+        layout.addView(backButton);
 
-        backButton.setOnClickListener(view -> finish());
+        backButton.setOnClickListener(v -> finish());
 
         TextView title = new TextView(this);
         title.setText("Settings");
-        title.setTextSize(27);
-        title.setTextColor(Color.rgb(135, 54, 91));
-        root.addView(title);
+        title.setTextSize(28);
+        title.setTextColor(navy);
+        title.setPadding(0, 20, 0, 20);
+        layout.addView(title);
 
-        TextView about = new TextView(this);
-        about.setText(
-                "\nSmart Pantry Manager\n\n" +
-                        "Keep track of ingredients and discover recipes " +
-                        "using what you already have.\n\n" +
-                        "Your pantry data is saved locally on this device."
-        );
-        about.setTextSize(17);
-        root.addView(about);
+        TextView description = new TextView(this);
+        description.setText(
+                "Smart Pantry Manager\n\n" +
+                        "Manage your pantry and discover recipes using your ingredients.");
+        description.setTextColor(navy);
+        description.setTextSize(16);
+        layout.addView(description);
 
-        Button clear = new Button(this);
-        clear.setText("Clear all pantry ingredients");
-        clear.setAllCaps(false);
-        root.addView(clear);
-
-        clear.setOnClickListener(view ->
-                new AlertDialog.Builder(this)
-                        .setTitle("Clear pantry?")
-                        .setMessage(
-                                "This removes all saved ingredients."
-                        )
-                        .setNegativeButton("Cancel", null)
-                        .setPositiveButton("Clear", (dialog, which) -> {
-
-                            DBHelper dbHelper = new DBHelper(this);
-
-                            dbHelper.getWritableDatabase()
-                                    .delete("ingredients", null, null);
-
-                            dbHelper.close();
-
-                            Toast.makeText(
-                                    this,
-                                    "Pantry cleared",
-                                    Toast.LENGTH_SHORT
-                            ).show();
-                        })
-                        .show()
-        );
-
-        setContentView(root);
+        TextView version = new TextView(this);
+        version.setText("Smart Pantry Manager Rea");
+        version.setTextColor(blue);
+        version.setPadding(0, 24, 0, 0);
+        layout.addView(version);
     }
 }
